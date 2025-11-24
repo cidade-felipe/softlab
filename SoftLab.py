@@ -85,9 +85,9 @@ class SoftLab:
             messagebox.showerror('ERRO', 'Faça logout para registrar um aluno!')
             
     def widgets_registrar(self, janela):
-        dias= [dia for dia in range(1, 32)]
-        meses = [mes for mes in range(1, 13)]
-        anos = [ano for ano in range(1980, datetime.now().year + 1)]
+        dias = list(range(1, 32))
+        meses = list(range(1, 13))
+        anos = list(range(1980, datetime.now().year + 1))
         label_instituicao = Label(janela, text="Instituição:", font=("Arial", 10, "bold"))
         label_instituicao.pack()
         self.entry_instituicao = Entry(janela)
@@ -105,7 +105,7 @@ class SoftLab:
         self.entry_matricula = Entry(janela)
         self.entry_matricula.pack(padx=5, pady=5, fill=tk.X)
         label_idade = tk.Label(janela, text="Idade:", font=("Arial", 10, "bold"))
-        label_idade.pack() 
+        label_idade.pack()
         frame_idade_labels = tk.Frame(janela)
         frame_idade_labels.pack(padx=5, pady=5)
         frame_idade_entries = tk.Frame(janela)
@@ -148,32 +148,34 @@ class SoftLab:
         if instituicao and nome and matricula and self.combo_dia.get() and self.combo_mes.get() and self.combo_ano.get() and sexo and email and senha and confirmar_senha:
             if not matricula.isnumeric():
                 messagebox.showerror("ERRO", "A matricula deve ser um inteiro!")
-                self.nova_janela.destroy()
             elif not nome.replace(' ', '').isalpha():
                 messagebox.showerror("ERRO", "O nome deve conter apenas letras!")
-                self.nova_janela.destroy()
+            elif senha == confirmar_senha:
+                try:
+                    idade = self.calcular_idade(self.combo_dia.get(), self.combo_mes.get(), self.combo_ano.get())
+                except ValueError:
+                    messagebox.showerror("ERRO", "Data de nascimento inválida!")
+                    self.nova_janela.destroy()
+                self.cursor.execute("INSERT INTO alunos (instituicao, matricula, nome, idade, sexo, email, senha) VALUES (?, ?, ?, ?, ?, ?, ?)", (instituicao, matricula, nome, idade, sexo, email, senha))
+                self.conexao.commit()
+                messagebox.showinfo("SUCESSO", "Aluno cadastrado com sucesso!")
             else:
-                if senha != confirmar_senha:
-                    messagebox.showerror("ERRO", "As senhas devem ser iguais!")
-                    self.nova_janela.destroy()
-                else:
-                    try:
-                        idade = self.calcular_idade(self.combo_dia.get(), self.combo_mes.get(), self.combo_ano.get())
-                    except ValueError:
-                        messagebox.showerror("ERRO", "Data de nascimento inválida!")
-                        self.nova_janela.destroy()
-                    self.cursor.execute("INSERT INTO alunos (instituicao, matricula, nome, idade, sexo, email, senha) VALUES (?, ?, ?, ?, ?, ?, ?)", (instituicao, matricula, nome, idade, sexo, email, senha))
-                    self.conexao.commit()
-                    messagebox.showinfo("SUCESSO", "Aluno cadastrado com sucesso!")
-                    self.nova_janela.destroy()
+                messagebox.showerror("ERRO", "As senhas devem ser iguais!")
+            self.nova_janela.destroy()
         else:
             messagebox.showerror("ERRO", "Todos os campos devem ser preenchidos!")
 
     def calcular_idade(self, dia, mes, ano):
         data_nascimento = datetime(int(ano), int(mes), int(dia))
         data_atual = datetime.now()
-        idade = data_atual.year - data_nascimento.year - ((data_atual.month, data_atual.day) < (data_nascimento.month, data_nascimento.day))
-        return idade
+        return (
+            data_atual.year
+            - data_nascimento.year
+            - (
+                (data_atual.month, data_atual.day)
+                < (data_nascimento.month, data_nascimento.day)
+            )
+        )
 
     def listar_alunos(self):
         if self.login_adm_ativo:
@@ -233,10 +235,10 @@ class SoftLab:
             if usuario == self.usuario_adm() and senha == self.senha_adm():
                 self.login_adm_ativo = True
                 messagebox.showinfo("SUCESSO", "Login realizado com sucesso!")
-                self.nova_janela.destroy()
             else:
                 messagebox.showerror("ERRO", "Usuário ou senha incorretos!")
-                self.nova_janela.destroy()
+
+            self.nova_janela.destroy()
 
     def abrir_login_adm(self):
         if self.login_adm_ativo == True or self.login_aluno_ativo == True:
@@ -272,19 +274,16 @@ class SoftLab:
         if instituicao and matricula and senha:
             if not matricula.isnumeric():
                 messagebox.showerror("ERRO", "A matricula deve ser um inteiro!")
-                self.nova_janela.destroy()
+            elif senha == self.senha_aluno(matricula, instituicao):
+                self.login_aluno_ativo = True
+                self.usuario_logado = matricula
+                messagebox.showinfo("SUCESSO", "Login realizado com sucesso!")
             else:
-                if senha == self.senha_aluno(matricula, instituicao):
-                    self.login_aluno_ativo = True
-                    self.usuario_logado = matricula
-                    messagebox.showinfo("SUCESSO", "Login realizado com sucesso!")
-                    self.nova_janela.destroy()
-                else:
-                    messagebox.showerror("ERRO", "Usuário ou senha incorretos!")
-                    self.nova_janela.destroy()
+                messagebox.showerror("ERRO", "Usuário ou senha incorretos!")
         else:
             messagebox.showerror("ERRO", "Por favor, preencha todos os campos!")
-            self.nova_janela.destroy()
+
+        self.nova_janela.destroy()
 
     def abrir_login_aluno(self):
         if self.tem_cadastro():
@@ -316,9 +315,9 @@ class SoftLab:
             messagebox.showerror("ERRO", "A matricula deve ser um inteiro!")
         else:
             try:
-                messagebox.showinfo("SENHA DO ALUNO", f"Senha: {self.senha_aluno(self.entry_matricula_aluno.get(), self.combo_instituicao_aluno.get())}")
+                messagebox.showinfo("SENHA DO ALUNO", f"Senha: {self.senha_aluno(matricula , instituicao)}")
                 self.nova_janela.destroy()
-            except:
+            except Exception:
                 messagebox.showerror("ERRO", "Matricula ou instituição incorretos!")
 
     def abrir_esquecer_senha_aluno(self):
@@ -371,21 +370,24 @@ class SoftLab:
         materiais_input = self.entry_materiais.get()
         if not nome_projeto or not descricao or not materiais_input:
             messagebox.showerror('ERRO', 'Todos os campos devem ser preenchidos!')
-            self.nova_janela.destroy()
-        elif nome_projeto and descricao and materiais_input:
-            materiais = [m.strip().capitalize() for m in materiais_input.split(',')] if materiais_input else []
-            self.cursor.execute("SELECT MAX(id) FROM projetos")
-            maior_id = self.cursor.fetchone()[0] or 0
-            id_projeto_novo = maior_id + 1
-            self.cursor.execute("INSERT INTO projetos (id, matricula, nome, descricao) VALUES (?, ?, ?, ?)", (id_projeto_novo, self.usuario_logado, nome_projeto, descricao))
-            for material in materiais:
-                self.cursor.execute("INSERT INTO materiais (id_projeto, material) VALUES (?, ?)", (id_projeto_novo, material))
-            self.conexao.commit()
-            messagebox.showinfo("SUCESSO", "Projeto adicionado com sucesso!")
-            self.nova_janela.destroy()
         else:
-            messagebox.showerror('ERRO', 'Projeto não adicionado!')
+            self._extracted_from_adicionar_projeto_9(
+                materiais_input, nome_projeto, descricao
+            )
         self.nova_janela.destroy()
+        self.nova_janela.destroy()
+
+    # TODO Rename this here and in `adicionar_projeto`
+    def _extracted_from_adicionar_projeto_9(self, materiais_input, nome_projeto, descricao):
+        materiais = [m.strip().capitalize() for m in materiais_input.split(',')] if materiais_input else []
+        self.cursor.execute("SELECT MAX(id) FROM projetos")
+        maior_id = self.cursor.fetchone()[0] or 0
+        id_projeto_novo = maior_id + 1
+        self.cursor.execute("INSERT INTO projetos (id, matricula, nome, descricao) VALUES (?, ?, ?, ?)", (id_projeto_novo, self.usuario_logado, nome_projeto, descricao))
+        for material in materiais:
+            self.cursor.execute("INSERT INTO materiais (id_projeto, material) VALUES (?, ?)", (id_projeto_novo, material))
+        self.conexao.commit()
+        messagebox.showinfo("SUCESSO", "Projeto adicionado com sucesso!")
 
     def abrir_novo_projeto(self):
         if self.tem_cadastro():
@@ -404,7 +406,7 @@ class SoftLab:
             if self.login_aluno_ativo:
                 self.cursor.execute("SELECT id, nome FROM projetos WHERE matricula = ? ORDER BY id", (self.usuario_logado,))
                 projetos = "\n".join([f"{nome}" for id, nome in self.cursor.fetchall()])
-                if len(projetos) > 0:
+                if projetos != "":
                     messagebox.showinfo("PROJETOS DO ALUNO", projetos)
                 else:
                     messagebox.showerror('ERRO', 'Não há nenhum projeto cadastrado!')
@@ -480,9 +482,9 @@ class SoftLab:
             messagebox.showerror('ERRO', 'Não há nenhum aluno cadastrado!')
 
     def widgets_alterar_dados(self, janela):
-        dias= [dia for dia in range(1, 32)]
-        meses = [mes for mes in range(1, 13)]
-        anos = [ano for ano in range(1980, datetime.now().year + 1)]
+        dias = list(range(1, 32))
+        meses = list(range(1, 13))
+        anos = list(range(1980, datetime.now().year + 1))
         label_nome = tk.Label(janela, text="Novo Nome:", font=("Arial", 10, "bold"))
         label_nome.pack()
         self.entry_nome = tk.Entry(janela)
@@ -492,7 +494,7 @@ class SoftLab:
         self.entry_email = tk.Entry(janela)
         self.entry_email.pack(padx=5, pady=5, fill=tk.X)
         label_idade = tk.Label(janela, text="Idade:", font=("Arial", 10, "bold"))
-        label_idade.pack() 
+        label_idade.pack()
         frame_idade_labels = tk.Frame(janela)
         frame_idade_labels.pack(padx=5, pady=5)
         frame_idade_entries = tk.Frame(janela)
@@ -564,19 +566,17 @@ class SoftLab:
             messagebox.showerror('ERRO', 'Não há nenhum aluno cadastrado!')
 
     def fazer_logout(self):
-        if not self.login_adm_ativo and not self.login_aluno_ativo:
-            messagebox.showerror('ERRO', 'Nenhum aluno ou administrador logado!')
-        else:
+        if self.login_adm_ativo or self.login_aluno_ativo:
             confirmar = messagebox.askyesno("LOGOUT", "Tem certeza que deseja fazer logout?")
-            if not confirmar:
-                pass
-            else:
+            if confirmar:
                 self.login_adm_ativo = False
                 self.login_aluno_ativo = False
                 messagebox.showinfo("SUCESSO", "Logout efetuado com sucesso!")
+        else:
+            messagebox.showerror('ERRO', 'Nenhum aluno ou administrador logado!')
 
     def limpar_banco_de_dados(self):
-        if self.login_adm_ativo == True:
+        if self.login_adm_ativo:
             confirmar = messagebox.askyesno("LIMPAR BANCO DE DADOS", "Tem certeza que deseja limpar todo o banco de dados?.")
             if confirmar:
                 novo_aviso = messagebox.askyesno("AVISO!", "Esta ação é irreversível.")
@@ -589,10 +589,6 @@ class SoftLab:
                     self.cursor.execute("UPDATE sqlite_sequence SET seq = 0 WHERE name = 'materiais'")
                     self.conexao.commit()
                     messagebox.showinfo("SUCESSO", "Banco de dados limpo com sucesso!")
-                else:
-                    pass
-            else:
-                pass
         else:
             messagebox.showerror('ERRO', 'Faça login como administrador primeiro!')
 
@@ -628,10 +624,7 @@ class SoftLab:
     def tem_cadastro(self):
         self.cursor.execute('SELECT COUNT(*) FROM alunos')
         resultado = self.cursor.fetchone()
-        if resultado[0] > 0:
-            return True
-        else:
-            return False
+        return resultado[0] > 0
 
     def instituicao_existe(self, instituicao):
         self.cursor.execute("SELECT instituicao FROM alunos WHERE instituicao = ?", (instituicao,))
@@ -650,12 +643,10 @@ class SoftLab:
         return self.cursor.fetchone()[0]
 
     def senha_adm(self):
-        senha = 'pe-de-moleque'
-        return senha
+        return 'pe-de-moleque'
 
     def usuario_adm(self):
-        usuario = 'Admin'
-        return usuario
+        return 'Admin'
 
     def nome_instituicoes(self):
         self.cursor.execute("SELECT DISTINCT instituicao FROM alunos")

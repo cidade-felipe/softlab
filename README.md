@@ -1,106 +1,243 @@
-# SoftLab 🎓💻
+# SoftLab
 
-SoftLab é um protótipo para o cadastro de alunos e gerenciamento de projetos em laboratórios makers. Este projeto foi desenvolvido para ajudar a organizar e administrar alunos e seus projetos, fornecendo uma interface gráfica amigável e funcionalidades essenciais.
+SoftLab é um sistema de gestão de alunos e projetos desenvolvido em Python, com interface gráfica em Tkinter e banco de dados SQLite.  
+Ele foi pensado para apoiar um Laboratório Maker ou espaço similar, permitindo cadastro de alunos, controle de projetos e materiais usados, com perfis de administrador e aluno.
 
-## Funcionalidades 🚀
+---
 
-- **Autenticação e Sessões**:
-  - Login e logout para administradores e alunos.
-  - Validação de credenciais para acessar diferentes funcionalidades com base no tipo de usuário.
+## Visão geral
 
-- **Gerenciamento de Alunos**:
-  - Registro de novos alunos.
-  - Listagem de alunos cadastrados.
-  - Filtragem de alunos por instituição.
-  - Alteração e remoção de dados de alunos.
-  - Recuperação de senha dos alunos (sem envio de email).
+O sistema oferece um painel principal com vários botões, onde é possível:
 
-- **Gerenciamento de Projetos**:
-  - Adição de novos projetos para alunos.
-  - Listagem de projetos de um aluno específico.
-  - Exibição de informações detalhadas dos projetos, incluindo materiais utilizados.
-  - Remoção de projetos cadastrados.
+- cadastrar novos alunos
+- fazer login como administrador ou aluno
+- listar alunos e filtrar por instituição
+- cadastrar projetos vinculados a cada aluno
+- registrar os materiais usados em cada projeto
+- consultar informações de alunos e projetos
+- editar dados do aluno logado
+- remover projetos e alunos
+- limpar completamente o banco de dados (apenas administrador)
+- ouvir música ambiente enquanto usa o sistema, com opção de pausar ou retomar
 
-- **Banco de Dados**:
-  - Utilização de SQLite para armazenar informações dos alunos e projetos.
-  - Estrutura de tabelas para `alunos`, `projetos` e `materiais`.
-  - Funções de inserção, atualização, remoção e consulta no banco de dados.
+O banco `softlab.db` é criado automaticamente na primeira execução.
 
-- **Interface Gráfica**:
-  - Utilização de `Tkinter` para criar uma interface de usuário amigável.
-  - Diferentes janelas e frames para cada funcionalidade.
-  - Botões e entradas de texto para interação com o usuário.
+---
 
-- **Música de Fundo**:
-  - Utilização do `pygame` para tocar música de fundo no aplicativo.
-  - Controle de play/pause da música através de botões na interface.
+## Funcionalidades principais
 
-## Limitações ⚠️
+### Autenticação e perfis
 
-- Não há funcionalidade de envio de emails para recuperação de senhas.
-- A música de fundo e a imagem do logo devem estar no mesmo diretório do código para que o aplicativo funcione corretamente.
-- A música deve ter o nome **Contato.mp3**.
-- A imagem do logo deve ser chamada **Logo.png**.
+- Login como administrador  
+  - usuário fixo: `Admin`  
+  - senha fixa: `pe-de-moleque`  
 
-## Bibliotecas Utilizadas 📚
+- Login como aluno  
+  - por instituição  
+  - por matrícula  
+  - validação de senha pelo banco de dados  
 
-- **Tkinter**: Biblioteca padrão do Python para a criação de interfaces gráficas. Já vem instalada com o Python.
-  - Importação:
-    ```python
-    import tkinter as tk
-    from tkinter import Tk, Label, ttk, messagebox, simpledialog, Entry, Button, Toplevel
-    ```
+- Logout com confirmação  
+- Recuperação de senha de aluno (somente após login de administrador)
 
-- **Pillow (PIL)**: Biblioteca para manipulação de imagens.
-  - Instalação:
-    ```bash
-    pip install Pillow
-    ```
-  - Importação:
-    ```python
-    from PIL import ImageTk, Image
-    ```
+### Gestão de alunos
 
-- **SQLite3**: Biblioteca padrão do Python para banco de dados SQLite.
-  - Instalação: Não é necessária, já vem instalada com o Python.
-  - Importação:
-    ```python
-    import sqlite3
-    ```
+- Cadastro de aluno com:
+  - instituição
+  - nome
+  - e-mail
+  - matrícula
+  - data de nascimento (usada para calcular idade)
+  - sexo
+  - senha com confirmação
 
-- **Pygame**: Biblioteca para criação de jogos e manipulação de multimídia, utilizada aqui para tocar música.
-  - Instalação:
-    ```bash
-    pip install pygame
-    ```
-  - Importação:
-    ```python
-    import pygame
-    ```
+- Validações:
+  - matrícula deve ser numérica
+  - nome deve conter apenas letras
+  - datas inválidas são tratadas com erro
 
-- **Datetime**: Biblioteca padrão do Python para manipulação de datas e horários.
-  - Instalação: Não é necessária, já vem instalada com o Python.
-  - Importação:
-    ```python
-    from datetime import datetime
-    ```
+- Listagem de alunos:
+  - lista geral, ordenada por nome
+  - listagem por instituição
 
-## Instalação ⚙️
+- Edição de dados do aluno logado:
+  - nome
+  - e-mail
+  - data de nascimento
+  - sexo
 
-1. **Clone o repositório**:
-   ```bash
-   git clone https://github.com/felipecidade94/softlab
-   ```
+- Remoção de aluno:
+  - remove aluno, projetos associados e materiais relacionados
 
-2. **Crie um ambiente virtual (opcional, mas recomendado):**
-   ```bash
-   python -m venv venv
-   source venv/bin/activate  # Linux/Mac
-   .\venv\Scripts\activate  # Windows
-   ```
+### Gestão de projetos
 
-## Contato
+Cada projeto pertence a um aluno (por matrícula) e pode ter vários materiais associados.
 
-- [GitHub](https://github.com/felipecidade94)
-- [intagram](https://www.instagram.com/felipe.city/)
-- [Linkedin](https://www.linkedin.com/in/cidadefelipe/)
+O aluno logado pode:
+
+- cadastrar novos projetos, informando:
+  - nome do projeto
+  - descrição
+  - lista de materiais (separados por vírgula)
+
+- listar seus projetos
+- visualizar detalhes de cada projeto:
+  - nome
+  - descrição
+  - lista de materiais cadastrados
+
+- remover um ou mais projetos pela interface de seleção múltipla, com remoção dos respectivos materiais
+
+### Banco de dados
+
+O sistema usa SQLite, com três tabelas principais:
+
+- `alunos`
+- `projetos`
+- `materiais`
+
+Há também a opção de o administrador limpar todo o banco de dados, incluindo:
+
+- dados de alunos
+- projetos
+- materiais
+- reinício da sequência de IDs de projetos e materiais
+
+### Interface gráfica
+
+- Interface principal em Tkinter, com botões organizados em um frame central
+- Janela principal com logo do projeto
+- Várias janelas secundárias (`Toplevel`) para:
+  - registro
+  - login
+  - alteração de dados
+  - cadastro de projetos
+  - remoção de projetos
+  - listagem por instituição
+
+### Música de fundo
+
+- Reprodução em loop de um arquivo de áudio (`./src/music/contato.mp3`) usando `pygame.mixer`
+- Botão para pausar e retomar a música
+
+---
+
+## Tecnologias utilizadas
+
+- Python 3.x
+- Tkinter
+- SQLite3
+- Pygame
+- Pillow (PIL)
+- Módulo `datetime` da biblioteca padrão
+
+---
+
+## Estrutura do projeto
+
+Um possível layout de pastas para o SoftLab é:
+
+```text
+SOFTLAB/
+├── src/
+│   ├── img/
+│   │   └── logo.png
+│   └── music/
+│       └── contato.mp3
+├── venv/                 # ambiente virtual (opcional)
+├── softlab.db            # banco SQLite gerado automaticamente
+├── SoftLab.py            # código principal
+├── requirements.txt
+└── README.md
+````
+
+Certifique-se de que o `logo.png` e o arquivo de música estejam nos caminhos esperados pelo código:
+
+* `./src/img/logo.png`
+* `./src/music/contato.mp3`
+
+---
+
+## Como executar
+
+### 1. Clonar o repositório
+
+```bash
+git clone https://github.com/cidade-felipe/softlab.git
+cd softlab
+```
+
+### 2. Criar ambiente virtual (opcional)
+
+```bash
+python -m venv .venv
+source .venv/bin/activate   # Linux / macOS
+.\.venv\Scripts\activate    # Windows
+```
+
+### 3. Instalar dependências
+
+Se você já tiver um `requirements.txt`, use:
+
+```bash
+pip install -r requirements.txt
+```
+
+Caso contrário, certifique-se de instalar pelo menos:
+
+```bash
+pip install pygame pillow
+```
+
+Tkinter e sqlite3 costumam vir junto com a instalação padrão do Python em muitas distribuições.
+
+### 4. Executar o SoftLab
+
+```bash
+python SoftLab.py
+```
+
+A janela principal será aberta, já com a música de fundo e o menu de opções.
+
+---
+
+## Fluxo sugerido de uso
+
+1. Fazer login como administrador
+
+   * usuário `Admin`
+   * senha `pe-de-moleque`
+
+2. Cadastrar um aluno em "REGISTRE-SE"
+
+3. Fazer logout
+
+4. Fazer login como aluno, usando instituição, matrícula e senha cadastradas
+
+5. Cadastrar projetos, listar projetos e visualizar materiais
+
+6. Explorar funções de alteração de dados, remoção de projetos e remoção de aluno
+
+7. Quando necessário, limpar o banco de dados pelo menu de administrador
+
+---
+
+## Melhorias futuras
+
+Algumas ideias de evolução para o SoftLab:
+
+* Separar o código em múltiplos módulos para organização por responsabilidade
+* Adicionar validações mais completas de e-mail e senha
+* Criar relatórios simples de projetos por instituição
+* Implementar exportação de dados para CSV ou PDF
+* Tornar configuráveis o usuário e senha de administrador
+* Internacionalizar a interface para outros idiomas
+
+---
+
+## Autores
+
+Projeto desenvolvido por:
+
+* Felipe Cidade Soares
+* Ivy Oliveira dos Reis
