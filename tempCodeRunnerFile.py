@@ -1,1 +1,0 @@
-self.cursor = self.conexao.cursor()
